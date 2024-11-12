@@ -1,0 +1,16 @@
+{
+  "name": "ctrltk.js",
+  "version": "1.0.0",
+  "description": "Tool to control an X display through a web UI",
+  "main": "src/index.js",
+  "repository": "",
+  "scripts": {
+    "run": "biome check --fix src && tsc && node src/index.js",
+    "run!": "tsc && node src/index.js"
+  },
+  "author": "rozbrajaczpoziomow",
+  "license": "MIT",
+  "dependencies": {
+    "typescript": "^5.6.3"
+  }
+}
