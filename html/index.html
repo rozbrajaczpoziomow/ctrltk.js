@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset='utf-8'>
+	<meta name='viewport' content='width=device-width, initial-scale=1'>
+	<meta name='darkreader-lock'>
+	<link rel='stylesheet' type='text/css' href='/style.css'>
+	<title>ctrltk.js</title>
+</head>
+<body>
+	<img id='img'>
+
+	<script type='text/javascript'>
+		function reloadImage() {
+			img.src = `/api/image?${Date.now()}`;
+			img.onload = () => setTimeout(reloadImage, 50);
+		}
+
+		reloadImage();
+	</script>
+</body>
+</html>
