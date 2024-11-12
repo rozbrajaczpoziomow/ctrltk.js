@@ -21,7 +21,6 @@
 		"rules": {
 			"recommended": true,
 			"suspicious": {
-				"noDoubleEquals": "off",
 				"noExplicitAny": "off"
 			},
 			"style": {
