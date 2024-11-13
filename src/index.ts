@@ -6,7 +6,7 @@ import express from 'express';
 
 // Constants
 const config: Config = JSON.parse(readFileSync('config.json').toString());
-const packageFile: { version: string; } = JSON.parse(readFileSync('package.json').toString());
+const packageFile: { name: string; version: string; } = JSON.parse(readFileSync('package.json').toString());
 const htmlDir = path.join(import.meta.dirname, '..', 'html');
 
 function exec(command: string, args: string[]): string | undefined {
@@ -14,7 +14,7 @@ function exec(command: string, args: string[]): string | undefined {
 		const proc = spawnSync(command, args, { encoding: 'utf-8' });
 		const ret = proc.stdout.trim();
 		if(process.env.DEBUG)
-			console.log(`${command} ${args} => '${ret}'`);
+			console.log(`$ ${command} ${args} => '${ret}'`);
 		return ret;
 	} catch(e) {
 		console.error(`Calling ${command} ${args} failed:`);
@@ -99,6 +99,7 @@ app.use('/api', (req, res, next) => {
 		// `if` left in case we add more auth types
 		if(config.auth.type === 'pass') {
 			if(!(username in config.auth.users) || config.auth.users[username].password !== pass) {
+				console.log(`${username} - incorrect password (${req.method} ${req.originalUrl})`);
 				fail();
 				return;
 			}
@@ -117,10 +118,12 @@ app.use('/api', (req, res, next) => {
 		// TODO: POST to /api/admin requires admin (when /api/admin is implemented)
 
 		if(req.method === 'POST' && !checkAuth(user, 'write')) {
+			console.log(`${username} - tried to access resources they couldn't (${req.method} ${req.originalUrl} with ${user.permissions})`)
 			fail();
 			return;
 		}
 
+		console.log(`${username} - ${req.method} ${req.originalUrl} [${user.permissions}]`);
 		(req as Req).user = user;
 		next();
 	} catch(e) {
@@ -132,11 +135,17 @@ app.use('/api', (req, res, next) => {
 
 app.use('/api', express.json());
 
+if(process.env.DEBUGGER)
+	app.use('/api', (req, res, next) => {
+		console.log(req.body);
+		next();
+	})
+
 // GET
 app.get('/api/info', (req, res) => {
 	const user = (req as Req).user;
 	res.json({
-		version: `ctrltk.js/${packageFile.version}`,
+		version: `${packageFile.name}/${packageFile.version}`,
 		user
 	});
 });
@@ -156,14 +165,25 @@ app.get('/api/image', (req, res) => {
 		// tried to make scrot output to stdout but just says
 		// scrot: failed to save image: /dev/stdout: No such device or address
 		// so unfortunately, we gotta touch disk/ramdisk
-		exec('scrot', ['-zpoF', '/tmp/ctrltk.js-scrot.png']);
+
+		// jpg gives much worse (lossy) quality, but is much smaller
+		let format = req.query.format;
+		if(format !== 'png' && format !== 'jpg')
+			format = 'png';
+
+		exec('scrot', ['-zpoZ', '9', '-F', `/tmp/ctrltk.js-scrot.${format}`]);
 		res.header('Cache-Control', 'max-age=0, must-revalidate');
-		res.sendFile('/tmp/ctrltk.js-scrot.png');
+		res.sendFile(`/tmp/ctrltk.js-scrot.${format}`);
 	} catch(e) {
 		console.error('Taking a screenshot failed:');
 		console.error(e);
 		res.status(500).send();
 	}
+});
+
+// Helper route to authenticate
+app.get('/api/auth', (req, res) => {
+	res.redirect('/index.html');
 });
 
 // POST
@@ -178,7 +198,7 @@ app.post('/api/keyboard', (req, res) => {
 	};
 	// Boring field validation
 	const { key, modifiers } = req.body as req;
-	if(typeof key !== 'string' || key.length !== 1 || typeof modifiers !== 'object') {
+	if(typeof key !== 'string' || typeof modifiers !== 'object') {
 		res.status(400).send();
 		return;
 	}
@@ -236,7 +256,7 @@ app.post('/api/mouse/click', (req, res) => {
 
 	xdotool(['click', button === 'left'? '1' : button === 'middle'? '2' : '3']);
 	res.status(200).send();
-})
+});
 
 app.listen(config.port, () => {
 	console.log(`Listening on http://127.0.0.1:${config.port}`);

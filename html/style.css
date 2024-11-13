@@ -49,3 +49,16 @@ input, select, button {
 a {
 	text-decoration: underline dotted #dead;
 }
+
+#info {
+	text-align: center;
+}
+
+.active {
+	background-color: #e6e;
+}
+
+#move {
+	text-align: center;
+	color: #d44;
+}

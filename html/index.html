@@ -9,14 +9,14 @@
 </head>
 <body>
 	<img id='img'>
+	<div id='controls'>
+		<p id='info' onclick='document.location = "/info.html";'></p>
+		<p id='move' style='display: none;'>Mouse movement disabled (double click)</p>
+		<button id='ctrlButton' onclick='button(this)'>Ctrl</button>
+		<button id='altButton' onclick='button(this)'>Alt</button>
+		<button id='superButton' onclick='button(this)'>Super</button>
+	</div>
 
-	<script type='text/javascript'>
-		function reloadImage() {
-			img.src = `/api/image?${Date.now()}`;
-			img.onload = () => setTimeout(reloadImage, 50);
-		}
-
-		reloadImage();
-	</script>
+	<script type='text/javascript' src='/index.js'></script>
 </body>
 </html>
