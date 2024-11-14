@@ -1,7 +1,7 @@
+import express from 'express';
 import { spawnSync } from 'node:child_process';
 import { readFileSync } from 'node:fs';
 import path from 'node:path';
-import express from 'express';
 
 
 // Constants
@@ -36,9 +36,9 @@ function checkAuth(user: User, check: Perms): boolean {
 }
 
 // Package dependencies
-for(const command of ['xdotool', 'scrot'])
-	if(!exec(command, ['-h'])) {
-		console.error(`Shell command not found: ${command}; please install a package that provides ${command}`);
+for(const command of ['xdotool', 'scrot', 'file'])
+	if(!exec(command, ['--help'])) {
+		console.error(`Shell command not found: "${command}"; please install a package that provides ${command}`);
 		process.exit(1);
 	}
 
@@ -171,9 +171,13 @@ app.get('/api/image', (req, res) => {
 		if(format !== 'png' && format !== 'jpg')
 			format = 'png';
 
-		exec('scrot', ['-zpoZ', '9', '-F', `/tmp/ctrltk.js-scrot.${format}`]);
+		const path = `/tmp/ctrltk.js-scrot.${format}`;
+		exec('scrot', ['-zpoZ', '9', '-F', path]);
+		const resolution = exec('file', [path])?.replaceAll(' ', '').match(/,\d+x\d+,/)?.[0].slice(1, -1) ?? '';
 		res.header('Cache-Control', 'max-age=0, must-revalidate');
-		res.sendFile(`/tmp/ctrltk.js-scrot.${format}`);
+		// header isn't the best solution but it's the best/easiest way to pass it with file upload
+		res.header('X-Screen-Resolution', resolution);
+		res.sendFile(path);
 	} catch(e) {
 		console.error('Taking a screenshot failed:');
 		console.error(e);

@@ -14,7 +14,7 @@ function button(btn) {
 }
 
 function post(endpoint, data) {
-	return fetch(`/api/${endpoint}`, {
+	return fetch(`api/${endpoint}`, {
 		method: 'POST',
 		headers: {
 			'Content-Type': 'application/json'
@@ -24,22 +24,26 @@ function post(endpoint, data) {
 	});
 }
 
-function reloadImage() {
-	img.src = `/api/image?format=jpg&${Date.now()}`;
+let imageWidth, imageHeight;
+
+async function reloadImage() {
+	const image = await fetch(`api/image?format=jpg&${Date.now()}`);
+	[imageWidth, imageHeight] = image.headers.get('X-Screen-Resolution').split('x');
+	img.src = URL.createObjectURL(await image.blob());
 	// img.onload = () => setTimeout(reloadImage, 10);
-	img.onload = () => reloadImage();
+	img.onload = reloadImage;
 }
 
 function resize() {
-	img.style.width = controls.style.width = `${window.innerWidth - 20}px`;
+	img.style.width = controls.style.width = `${window.innerWidth - 50}px`;
 }
 window.addEventListener('resize', resize);
 resize();
 
 async function main() {
-	const req = await fetch('/api/info');
+	const req = await fetch('api/info');
 	if(req.status == 401)
-		document.location = '/api/auth';
+		document.location = 'api/auth';
 	const json = await req.json();
 	info.innerText = `${json.version} - ${json.user.username} (${json.user.permissions}) (click for controls & such)`
 	reloadImage();
@@ -76,7 +80,7 @@ async function main() {
 	window.addEventListener('wheel', ev => {
 		ev.preventDefault();
 		post('mouse/scroll', {
-			direction: ev.deltaY < 0? 'down' : 'up'
+			direction: ev.deltaY < 0? 'up' : 'down'
 		});
 	});
 
@@ -88,12 +92,16 @@ async function main() {
 	});
 
 	window.addEventListener('mousemove', ev => {
-		if(!disableMove)
-			post('mouse/move', {
-				x: ev.movementX,
-				y: ev.movementY,
-				type: 'relative'
-			});
+		if(disableMove)
+			return;
+		const pageImageHeight = (window.innerWidth - 20) * (imageHeight / imageWidth)
+		console.log((window.innerWidth - 50), imageWidth, ev.clientX, ev.clientX * (imageWidth / (window.innerWidth - 50)));
+		console.log((window.innerHeight - 50), imageHeight, ev.clientX, ev.clientX * (imageHeight / (window.innerHeight - 50)));
+		post('mouse/move', {
+			x: ev.clientX * (imageWidth / (window.innerWidth - 50)),
+			y: ev.clientY * (pageImageHeight / (window.innerHeight - 50)),
+			type: 'absolute'
+		});
 	});
 }
 
