@@ -95,8 +95,8 @@ async function main() {
 		if(disableMove)
 			return;
 		const pageImageHeight = (window.innerWidth - 20) * (imageHeight / imageWidth)
-		console.log((window.innerWidth - 50), imageWidth, ev.clientX, ev.clientX * (imageWidth / (window.innerWidth - 50)));
-		console.log((window.innerHeight - 50), imageHeight, ev.clientX, ev.clientX * (imageHeight / (window.innerHeight - 50)));
+		// console.log((window.innerWidth - 50), imageWidth, ev.clientX, ev.clientX * (imageWidth / (window.innerWidth - 50)));
+		// console.log((window.innerHeight - 50), imageHeight, ev.clientX, ev.clientX * (imageHeight / (window.innerHeight - 50)));
 		post('mouse/move', {
 			x: ev.clientX * (imageWidth / (window.innerWidth - 50)),
 			y: ev.clientY * (pageImageHeight / (window.innerHeight - 50)),
